@@ -2,10 +2,12 @@ import { cookieStorage, createStorage } from '@wagmi/core';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { base } from '@reown/appkit/networks';
 
-// Hardcoded Reown projectId for debugging
-export const projectId = '3864f4e748b777e6c1a660f8cbc30b90';
+// Get projectId from env
+export const projectId = process.env.NEXT_PUBLIC_PROJECT_ID;
 
-// No runtime throw since it's hardcoded above
+if (!projectId) {
+  throw new Error('NEXT_PUBLIC_PROJECT_ID is not defined');
+}
 
 export const networks = [base];
 

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useAppKitAccount, useAppKitBalance, useAppKitNetwork, useAppKitState } from '@reown/appkit/react';
-import { Transaction } from '@coinbase/onchainkit/transaction';
-import { calls, counterContractAddress } from '@/calls';
+import { useWriteContract } from 'wagmi';
+import { counterContractAbi, counterContractAddress } from '@/calls';
 
 async function fetchNumber(): Promise<string> {
   try {
@@ -35,7 +35,7 @@ async function fetchNumber(): Promise<string> {
 }
 
 export default function TallyCard() {
-  const { address, isConnected } = useAppKitAccount({ namespace: 'eip155' });
+  const { address: walletAddress, isConnected } = useAppKitAccount({ namespace: 'eip155' });
   const { fetchBalance } = useAppKitBalance();
   const { chainId } = useAppKitNetwork();
   const { initialized } = useAppKitState();
@@ -44,6 +44,7 @@ export default function TallyCard() {
   const [balanceError, setBalanceError] = useState<string | null>(null);
   const [value, setValue] = useState<string>('0');
   const [loading, setLoading] = useState<boolean>(false);
+  const { writeContractAsync, isPending } = useWriteContract();
 
   const refresh = async () => {
     setLoading(true);
@@ -83,7 +84,22 @@ export default function TallyCard() {
     return () => {
       ignore = true;
     };
-  }, [initialized, isConnected, chainId, address, fetchBalance]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialized, isConnected, chainId, walletAddress]);
+
+  const onIncrement = async () => {
+    try {
+      await writeContractAsync({
+        address: counterContractAddress as `0x${string}`,
+        abi: counterContractAbi,
+        functionName: 'increment',
+        args: [] as const,
+      });
+      await refresh();
+    } catch {
+      // swallow in UI; optionally add toast
+    }
+  };
 
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/50 backdrop-blur p-6 shadow-sm">
@@ -108,12 +124,18 @@ export default function TallyCard() {
       </div>
 
       <div className="mt-6">
-        <Transaction calls={calls} />
+        <button
+          className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50"
+          disabled={!isConnected || isPending}
+          onClick={onIncrement}
+        >
+          {isPending ? 'Incrementing…' : 'Increment counter'}
+        </button>
       </div>
 
-      {address ? (
+      {walletAddress ? (
         <div className="mt-3 text-xs text-gray-500 break-all">
-          <p>Signed in as {address}</p>
+          <p>Signed in as {walletAddress}</p>
           {balanceLoading ? (
             <p className="mt-1">Fetching balance…</p>
           ) : balance ? (
