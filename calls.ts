@@ -9,7 +9,9 @@ export const counterContractAbi = [
   },
 ] as const;
 
-export const calls = [
+import type { ContractFunctionParameters } from 'viem';
+
+export const calls: ContractFunctionParameters[] = [
   {
     address: counterContractAddress,
     abi: counterContractAbi,

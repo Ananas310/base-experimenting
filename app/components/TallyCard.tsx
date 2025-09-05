@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
+import { useAppKitAccount, useAppKitBalance, useAppKitNetwork, useAppKitState } from '@reown/appkit/react';
 import { Transaction } from '@coinbase/onchainkit/transaction';
-import { calls, counterContractAbi, counterContractAddress } from '@/calls';
+import { calls, counterContractAddress } from '@/calls';
 
 async function fetchNumber(): Promise<string> {
   try {
@@ -35,7 +35,13 @@ async function fetchNumber(): Promise<string> {
 }
 
 export default function TallyCard() {
-  const { address } = useAccount();
+  const { address, isConnected } = useAppKitAccount({ namespace: 'eip155' });
+  const { fetchBalance } = useAppKitBalance();
+  const { chainId } = useAppKitNetwork();
+  const { initialized } = useAppKitState();
+  const [balance, setBalance] = useState<{ formatted?: string; symbol?: string } | null>(null);
+  const [balanceLoading, setBalanceLoading] = useState<boolean>(false);
+  const [balanceError, setBalanceError] = useState<string | null>(null);
   const [value, setValue] = useState<string>('0');
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -51,6 +57,33 @@ export default function TallyCard() {
     const interval = setInterval(refresh, 12_000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    const load = async () => {
+      if (!isConnected) {
+        if (!ignore) {
+          setBalance(null);
+          setBalanceError(null);
+        }
+        return;
+      }
+      if (!ignore) setBalanceLoading(true);
+      const result = await fetchBalance();
+      if (!ignore) {
+        const mappedBalance = result?.data
+          ? { formatted: result.data.balance, symbol: result.data.symbol }
+          : null;
+        setBalance(mappedBalance);
+        setBalanceError(result?.isError ? result.error ?? 'Failed to fetch balance' : null);
+        setBalanceLoading(false);
+      }
+    };
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [initialized, isConnected, chainId, address, fetchBalance]);
 
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/50 backdrop-blur p-6 shadow-sm">
@@ -79,9 +112,18 @@ export default function TallyCard() {
       </div>
 
       {address ? (
-        <p className="mt-3 text-xs text-gray-500 break-all">
-          Signed in as {address}
-        </p>
+        <div className="mt-3 text-xs text-gray-500 break-all">
+          <p>Signed in as {address}</p>
+          {balanceLoading ? (
+            <p className="mt-1">Fetching balance…</p>
+          ) : balance ? (
+            <p className="mt-1">
+              Balance: {balance.formatted ?? '0'} {balance.symbol}
+            </p>
+          ) : balanceError ? (
+            <p className="mt-1">Balance unavailable</p>
+          ) : null}
+        </div>
       ) : (
         <p className="mt-3 text-xs text-gray-500">Connect a wallet to increment</p>
       )}
