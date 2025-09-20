@@ -1,4 +1,4 @@
-export const counterContractAddress = '0xbcA866e7CCbB09E71c477470B0d06F31C499B03D';
+export const counterContractAddress = '0x0FB8b3f434147982A3c621Aa79CA3BC96a73e45F';
 export const counterContractAbi = [
   {
     type: 'function',

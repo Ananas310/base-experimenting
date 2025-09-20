@@ -1,10 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-onchain`]().
+## Base Experimenting — Next.js + Base + Reown (WalletConnect)
+
+This repo is a Next.js dapp scaffold focused on building on Base with a best-in-class wallet experience using Reown AppKit (WalletConnect). It bundles sensible UI, network presets, and developer tooling so you can ship quickly and safely on Base.
+
+Key highlights
+- Base-first configuration (Base Mainnet + Base Sepolia)
+- Reown AppKit wallet modal and connectors
+- OnchainKit utilities for account/tx UX
+- TypeScript-first Next.js app with App Router
 
 
-## Getting Started
+## Tech Stack
+- Next.js (App Router) + TypeScript
+- Base (L2 by Coinbase) networks: Mainnet and Sepolia
+- Reown AppKit (WalletConnect) for wallet connect and session management
+- OnchainKit by Coinbase for UI and quality-of-life primitives
+- Foundry (optional) for contracts and local testing
 
-First, install dependencies:
 
+## Quickstart
+1) Install dependencies
 ```bash
 npm install
 # or
@@ -15,8 +29,26 @@ pnpm install
 bun install
 ```
 
-Next, run the development server:
+2) Configure environment variables
+Create `.env.local` in the project root:
+```
+NEXT_PUBLIC_PROJECT_ID=YOUR_REOWN_APPKIT_PROJECT_ID
+NEXT_PUBLIC_ONCHAINKIT_API_KEY=YOUR_ONCHAINKIT_API_KEY
+NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME=Base Experimenting
+# Optional legacy value
+CDP_KEY_SECRET=
+```
+Where to get these
+- Reown AppKit project ID: `https://dashboard.reown.com`
+- OnchainKit API key: `https://portal.cdp.coinbase.com/`
 
+3) Allowlist your domains in Reown
+In Reown Dashboard, add:
+- `http://localhost:3000`
+- Your LAN origin if needed, e.g. `http://192.168.x.x:3000`
+- Production domain(s) when deploying
+
+4) Run the dev server
 ```bash
 npm run dev
 # or
@@ -26,34 +58,80 @@ pnpm dev
 # or
 bun dev
 ```
+Visit http://localhost:3000 and start building in `app/page.tsx`.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Networks
+By default the app is configured for:
+- Base Sepolia: for development and testing
+- Base Mainnet: for production
+
+You can adjust chain metadata or add chains in `config/index.ts` and context setup in `context/index.tsx`.
+
+
+## Wallets (Reown AppKit)
+Reown AppKit provides a plug-and-play wallet modal and connectors (including WalletConnect-compatible wallets). This repo wires AppKit into the app context, so users can connect, switch networks, and sign transactions on Base out of the box.
+
+Best practices
+- Ensure your `NEXT_PUBLIC_PROJECT_ID` is valid and your app origins are allowlisted
+- Show clear network context (Base logo/name) and default to Base Sepolia in dev
+- Keep `metadata` accurate in `context/index.tsx` for wallet session UX
+
+
+## Contracts (Optional)
+If you use the `/contracts` folder, Foundry configuration is included to help you iterate quickly:
+- Write and test contracts in Solidity
+- Broadcast scripts and caching are set up under `contracts/broadcast` and `contracts/cache`
+
+Common commands
+```bash
+forge build
+forge test -vvv
+anvil # local chain (if you prefer a local EVM)
+```
+
+
+## Project Structure
+- `app/` Next.js App Router pages, components, and providers
+- `app/components/` UI building blocks (e.g., `ConnectButton.tsx`)
+- `app/providers.tsx` Global providers (theme, wallet, etc.)
+- `config/` Chain and feature flags
+- `context/` App-level web3 context and metadata
+- `contracts/` (optional) Foundry workspace
+
+
+## Development Notes
+- Edit UI in `app/components` and pages in `app/`
+- Update chain configuration in `config/index.ts`
+- Update wallet and app metadata in `context/index.tsx`
+- Ensure environment variables are present before running `dev`
+
+
+## Future Plans & Roadmap
+Short-term
+- Add transaction builder utilities and status toasts using OnchainKit
+- Deploy example contracts to Base Sepolia and wire simple UI actions
+- Improve Connect button UX and network switching flows
+- Add linting, type-check in CI, and preview deployments
+
+Mid-term
+- Gas sponsorship experiments (Paymaster/AA when applicable)
+- Offchain data integrations: price feeds, oracles, and indexers
+- NFT mint flow example on Base
+- Role-based access examples (owner, minter, admin)
+
+Long-term
+- Full-featured starter with common dapp templates (swap, mint, claim)
+- Improved analytics and observability (events, errors, wallet metrics)
+- Hardened production patterns for Base mainnet (monitoring, canary, circuit breakers)
 
 
 ## Learn More
+- OnchainKit docs: https://onchainkit.xyz/getting-started
+- Next.js docs: https://nextjs.org/docs
+- Base docs: https://docs.base.org
+- Reown (WalletConnect) docs: https://docs.reown.com
 
-To learn more about OnchainKit, see our [documentation](https://onchainkit.xyz/getting-started).
 
-To learn more about Next.js, see the [Next.js documentation](https://nextjs.org/docs).
-
-## Environment variables
-
-Create a `.env.local` file in the project root with the following variables:
-
-- `NEXT_PUBLIC_PROJECT_ID`: Reown AppKit (WalletConnect) project ID from `https://dashboard.reown.com`.
-- `NEXT_PUBLIC_ONCHAINKIT_API_KEY`: Coinbase OnchainKit API key from `https://portal.cdp.coinbase.com/`.
-- `NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME`: Optional display name.
-- `CDP_KEY_SECRET`: Optional legacy value.
-
-After editing `.env.local`, restart the dev server.
-
-## Reown Dashboard domain allowlist
-
-Add your app origins to the allowlist in Reown Dashboard so the AppKit modal can initialize:
-
-- `http://localhost:3000`
-- Your LAN origin if accessing from another device, e.g. `http://192.168.100.185:3000`
-
-For production, add your live domain and update `metadata.url` in `context/index.tsx` to the exact origin.
+## License
+MIT — see `LICENSE` if present.
